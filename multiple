@@ -1,0 +1,63 @@
+// app/admin/schedule/page.tsx
+const DEFAULT_INTERVAL_MIN = 30;
+
+function* iterateSlots(date: string, segments: Segment[], intervalMin: number) {
+  for (const seg of segments) {
+    let cur = new Date(`${date}T${seg.start}:00`);
+    const end = new Date(`${date}T${seg.end}:00`);
+    while (cur < end) {
+      yield {
+        time: cur.toTimeString().slice(0, 5),
+        start: new Date(cur),
+        iso: cur.toISOString(),
+      };
+      cur = new Date(cur.getTime() + intervalMin * 60_000);
+    }
+  }
+}
+
+// components/appointment-form.tsx
+const Schema = z.object({
+  patientId: z.string().min(1, "Patient is required"),
+  service: z.string().min(1, "Service is required"),
+  date: z.string().min(1, "Date is required"),
+  time: z
+    .string()
+    .min(1, "Time is required")
+    .refine(
+      (t) => /^\d{2}:\d{2}$/.test(t) && ["00", "30"].includes(t.split(":")[1]),
+      { message: "Time must be on the hour or half past (:00 or :30)" }
+    ),
+  status: z.enum(["Pending", "Confirmed", "Completed", "Canceled"]),
+  notes: z.string().optional(),
+});
+
+<Input
+  id="a-time"
+  type="time"
+  step={1800}
+  value={data.time}
+  onChange={(e) => setData((s) => ({ ...s, time: e.target.value }))}
+/>
+
+// components/booking-form.tsx
+const BookingSchema = z.object({
+  // other fields here
+  time: z
+    .string()
+    .min(1, "Time is required")
+    .refine(
+      (t) => /^\d{2}:\d{2}$/.test(t) && ["00", "30"].includes(t.split(":")[1]),
+      { message: "Time must be on the hour or half past (:00 or :30)" }
+    ),
+  // other fields here
+});
+
+<Input
+  id="time"
+  type="time"
+  step={1800}
+  value={data.time}
+  onChange={(e) => setData((s) => ({ ...s, time: e.target.value }))}
+  aria-invalid={!!errors.time}
+/>
